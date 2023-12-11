@@ -3,6 +3,7 @@
 #include <chrono>
 #include <cstdlib>   // Para a função rand()
 #include <ctime>     // Para a função time()
+#include <stack>
 
 using namespace std;
 using namespace std::chrono;
@@ -24,7 +25,6 @@ int returnPivo(string type, vector<int> &vetor, int lo, int hi) {
     } else if (type == "random") {
         // Certifique-se de que o índice aleatório está dentro dos limites válidos
         int randIndex = rand() % (hi - lo + 1) + lo;
-
         return vetor[randIndex];
     } else if (type == "mediana") {
         int elementoDoMeio;
@@ -68,12 +68,23 @@ int partition(vector<int> &vetor, int lo, int hi, int &movimentation, int &compa
     return j;
 }
 
-void quickSort(vector<int> &vetor, int lo, int hi, int &comparation, int &movimentation, string typeOfPivot) {
-    if (lo < hi) {
+void quickSortIterative(vector<int> &vetor, int lo, int hi, int &comparation, int &movimentation, string typeOfPivot) {
+    stack<pair<int, int>> pilha;
+    pilha.push({lo, hi});
+
+    while (!pilha.empty()) {
+        auto [lo, hi] = pilha.top();
+        pilha.pop();
+
         int p = partition(vetor, lo, hi, movimentation, comparation, typeOfPivot);
 
-        quickSort(vetor, lo, p, comparation, movimentation, typeOfPivot);
-        quickSort(vetor, p + 1, hi, comparation, movimentation, typeOfPivot);
+        if (p - 1 > lo) {
+            pilha.push({lo, p - 1});
+        }
+
+        if (p + 1 < hi) {
+            pilha.push({p + 1, hi});
+        }
     }
 }
 
@@ -99,27 +110,25 @@ vector<int> generateList(int size, double exchangePercentage) {
     return list;
 }
 
-
 int main() {
     // "inicio", "central", "media", "random", "mediana", "achaPivo"
-    string typeOfPivot = "media";
-    
+    string typeOfPivot = "inicio";
+
     // 100, 1000, 10000...
-    int size = 10000;
+    int size = 1000;
 
     // 0.05, 0.25, 0.45
-    double randomPercentage = 0.45;
-    
-    
+    double randomPercentage = 0.05;
+
     vector<int> vetor = generateList(size, randomPercentage);
     int comparation = 0, movimentation = 0;
     srand(time(NULL));
-    
+
     auto start = high_resolution_clock::now();
-    quickSort(vetor, 0, size - 1, comparation, movimentation, typeOfPivot);
+    quickSortIterative(vetor, 0, size - 1, comparation, movimentation, typeOfPivot);
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>(stop - start);
-    cout << "Tempo de execução para QuickSort com pivot " << typeOfPivot << ": " << duration.count() << " microssegundos" << endl;
+    cout << "Tempo de execução para QuickSort Iterativo com pivot " << typeOfPivot << ": " << duration.count() << " microssegundos" << endl;
 
     return 0;
 }
