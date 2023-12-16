@@ -8,6 +8,8 @@
 using namespace std;
 using namespace std::chrono;
 
+// PIVOS NORMAIS
+
 void swap(int &a, int &b, int &movimentation) {
     movimentation += 1;
     int t = a;
@@ -48,16 +50,8 @@ int returnPivo(string type, vector<int> &vetor, int lo, int hi) {
             elementoDoMeio = vetor[hi];
         }
         return elementoDoMeio;
-    } else if (type == "achaPivo") {
-        // Procedimento Acha pivô
-        for (int i = lo + 1; i <= hi; ++i) {
-            if (vetor[i] < vetor[lo]) {
-                return vetor[i];
-            }
-        }
-        // Se nenhum elemento em desordem for encontrado, retorne o primeiro elemento
-        return vetor[lo];
     }
+    
     return -1;
 }
 
@@ -109,17 +103,84 @@ vector<int>* generateList(int size, double exchangePercentage) {
     return list;
 }
 
+// ACHA PIVO
+
+void achaPivo(int N1, int N2, int& PTO, vector<int>& Lista) {
+    int ESQ, DIR, POS;
+    ESQ = N1;
+    DIR = N2;
+    POS = ESQ + 1;
+    PTO = 0;
+
+    while (POS <= DIR) {
+        if (POS > DIR) {
+            break;
+        } else if (Lista[POS] >= Lista[POS - 1]) {
+            POS = POS + 1;
+        } else {
+            PTO = POS;
+            break;
+        }
+    }
+}
+
+void partitionAchaPivo(int N1, int N2, float PIVO, int& P, vector<int>& L) {
+    int ESQ, DIR;
+    ESQ = N1;
+    DIR = N2;
+
+    do {
+        swap(L[ESQ], L[DIR]);
+
+        while (L[ESQ] <= PIVO) {
+            ESQ = ESQ + 1;
+        }
+
+        while (L[DIR] > PIVO) {
+            DIR = DIR - 1;
+        }
+
+    } while (ESQ <= DIR);
+
+    P = DIR;
+}
+
+void quickSortAchaPivo(vector<int>& L, int N1, int N2) {
+    stack<pair<int, int>> pilha;
+    pilha.push({N1, N2});
+
+    while (!pilha.empty()) {
+        auto [ESQ, DIR] = pilha.top();
+        pilha.pop();
+
+        int PTO;
+        achaPivo(ESQ, DIR, PTO, L);
+
+        if (PTO != 0) {
+            int P;
+            partitionAchaPivo(ESQ, DIR, L[PTO], P, L);
+            pilha.push({ESQ, P});
+            pilha.push({P + 1, DIR});
+        }
+    }
+}
+
+// MAIN
+
 int main() {
     string typeOfPivot = "achaPivo";
-    int size = 1000;
-    double randomPercentage = 0.05;
+    int size = 100;
+    double randomPercentage = 0.45;
 
     vector<int>* vetor = generateList(size, randomPercentage);
     int comparation = 0, movimentation = 0;
     srand(time(NULL));
+    exibirLista(*vetor);
 
     auto start = high_resolution_clock::now();
-    quickSortIterative(*vetor, 0, size - 1, comparation, movimentation, typeOfPivot);
+    if(typeOfPivot == "achaPivo") quickSortAchaPivo(*vetor, 0, size - 1);
+    else quickSortIterative(*vetor, 0, size - 1, comparation, movimentation, typeOfPivot);
+
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>(stop - start);
     cout << "Tempo de execução para QuickSort com pivot " << typeOfPivot << ": " << duration.count() << " microssegundos" << endl;
